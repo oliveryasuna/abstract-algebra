@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "include": [
+    "./global.d.ts",
+    "./src/**/*.ts"
+  ],
+  "compilerOptions": {
+    //==================================================
+    // Emit
+    //==================================================
+
+    "outDir": "./dist"
+  }
+}

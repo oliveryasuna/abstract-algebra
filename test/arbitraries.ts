@@ -6,6 +6,10 @@ import type {PermutationElement} from '../src/group/structures/impl/symmetric-gr
 import {symmetricGroup, permutation} from '../src/group/structures/impl/symmetric-group';
 import type {ZnElement} from '../src/group/structures/impl/zn';
 import {zn, znElement} from '../src/group/structures/impl/zn';
+import type {MatrixElement, MatrixRing} from '../src/ring/structures/impl/matrix-ring';
+import {matrix} from '../src/ring/structures/impl/matrix-ring';
+import type {PolynomialElement, PolynomialRing} from '../src/ring/structures/impl/polynomial-ring';
+import {polynomial} from '../src/ring/structures/impl/polynomial-ring';
 import type {QuaternionElement} from '../src/ring/structures/impl/quaternion-ring';
 import {quaternion} from '../src/ring/structures/impl/quaternion-ring';
 import type {RationalElement} from '../src/ring/structures/impl/rational-field';
@@ -112,6 +116,66 @@ const arbQuaternionNonZero: fc.Arbitrary<QuaternionElement> = (
   arbQuaternion.filter((q => (((((q.a * q.a) + (q.b * q.b)) + (q.c * q.c)) + (q.d * q.d)) > 1e-8)))
 );
 
+/**
+ * Creates an arbitrary for polynomials over a commutative ring, given
+ * an arbitrary for the coefficient type.
+ *
+ * @param ring - The polynomial ring.
+ * @param arbCoeff - Arbitrary for coefficients.
+ * @param maxDegree - Maximum degree of generated polynomials.
+ * @returns An arbitrary for polynomials over a commutative ring.
+ */
+const arbPolynomial = (<TCoeff>(
+  ring: PolynomialRing<TCoeff>,
+  arbCoeff: fc.Arbitrary<TCoeff>,
+  maxDegree = 5
+): fc.Arbitrary<PolynomialElement<TCoeff>> =>
+  fc.array(arbCoeff, {
+    minLength: 0,
+    maxLength: (maxDegree + 1)
+  })
+    .map((coeffs => polynomial(ring, ...coeffs))));
+
+/**
+ * Creates an arbitrary for non-zero polynomials (at least one non-zero coefficient).
+ * @param ring - The polynomial ring.
+ * @param arbCoeffNonZero - Arbitrary for non-zero coefficients.
+ * @param arbCoeff - Arbitrary for coefficients.
+ * @param maxDegree - Maximum degree of generated polynomials.
+ * @returns An arbitrary for non-zero polynomials (at least one non-zero coefficient).
+ */
+const arbPolynomialNonZero = (<TCoeff>(
+  ring: PolynomialRing<TCoeff>,
+  arbCoeffNonZero: fc.Arbitrary<TCoeff>,
+  arbCoeff: fc.Arbitrary<TCoeff>,
+  maxDegree = 5
+): fc.Arbitrary<PolynomialElement<TCoeff>> =>
+  fc.tuple(
+    fc.array(arbCoeff, {
+      minLength: 0,
+      maxLength: maxDegree
+    }),
+    arbCoeffNonZero
+  ).map((([rest, leading]) => polynomial(ring, ...rest, leading))));
+
+/**
+ * Creates an arbitrary for n×n matrices over a commutative ring, given
+ * an arbitrary for the entry type.
+ *
+ * @param ring - The matrix ring.
+ * @param arbEntry - Arbitrary for entries.
+ * @returns An arbitrary for n×n matrices over a commutative ring.
+ */
+const arbMatrix = (<TEntry>(
+  ring: MatrixRing<TEntry>,
+  arbEntry: fc.Arbitrary<TEntry>
+): fc.Arbitrary<MatrixElement<TEntry>> =>
+  fc.array(arbEntry, {
+    minLength: (ring.size * ring.size),
+    maxLength: (ring.size * ring.size)
+  })
+    .map((entries => matrix(ring, entries))));
+
 export {
   arbZn,
   arbPermutation,
@@ -121,5 +185,8 @@ export {
   arbRational,
   arbRationalNonZero,
   arbQuaternion,
-  arbQuaternionNonZero
+  arbQuaternionNonZero,
+  arbPolynomial,
+  arbPolynomialNonZero,
+  arbMatrix
 };

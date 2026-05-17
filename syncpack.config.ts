@@ -1,5 +1,6 @@
 import type {RcFile} from 'syncpack';
 
+// eslint-disable-next-line import-x/no-default-export
 export default ({
   // https://jamiemason.github.io/syncpack/config/custom-types/
   customTypes: {
@@ -48,7 +49,7 @@ export default ({
     'keywords',
     'peerDependencies',
     'resolutions',
-    'scripts',
+    'scripts'
   ],
   sortExports: [
     'types',

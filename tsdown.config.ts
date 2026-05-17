@@ -6,7 +6,8 @@ const config = ({
   minify: true,
   treeshake: {moduleSideEffects: false},
   tsconfig: './tsconfig.build.json',
-  deps: {neverBundle: Object.keys((JSON.parse(await readFile('./package.json', 'utf8')) as Record<string, unknown>).dependencies as Record<string, string> ?? {})},
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-type-assertion
+  deps: {neverBundle: Object.keys(((JSON.parse(await readFile('./package.json', 'utf8')) as Record<string, unknown>).dependencies as Record<string, string>) ?? {})},
   dts: true,
   platform: 'node',
   sourcemap: true

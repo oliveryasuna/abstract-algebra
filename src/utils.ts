@@ -185,11 +185,26 @@ const extendedGcd = ((a: bigint, b: bigint): {gcd: bigint;
   });
 });
 
+const bigintAbs = ((n: bigint): bigint => ((n < 0n) ? -n : n));
+
+const bigintGcd = ((a: bigint, b: bigint): bigint => {
+  let x = bigintAbs(a);
+  let y = bigintAbs(b);
+
+  while(y !== 0n) {
+    [x, y] = [y, (x % y)];
+  }
+
+  return x;
+});
+
 export {
   highBit,
   factorial,
   permutations,
   modPow,
   isPrime,
-  extendedGcd
+  extendedGcd,
+  bigintAbs,
+  bigintGcd
 };

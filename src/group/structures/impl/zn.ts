@@ -73,7 +73,7 @@ const znN = ((zn: Zn): bigint => zn.modulus);
  * Creates a {@link ZnElement} by reducing {@link value} modulo n.
  *
  * @param zn - The structure to recover n from.
- * @param value
+ * @param value - The value to reduce modulo n.
  * @returns The {@link ZnElement} by reducing {@link value} modulo n.
  * @throws {RangeError} If {@link value} is not a valid element.
  */

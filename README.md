@@ -39,6 +39,41 @@ Rng (additive AbelianGroup + multiplicative Semigroup + distributivity)
             └── Field (+ multiplicative inverse)
 ```
 
+### Morphisms
+
+The library provides typed group and ring homomorphisms with utilities for composition, kernel/image computation, and verification.
+
+```typescript
+import { zn, znElement, groupHomomorphism, verifyGroupHomomorphism, kernel, imageSet, isInjective, isSurjective } from 'abstract-algebra';
+
+// Z/6Z → Z/3Z (mod 3 reduction)
+const Z6 = zn(6n);
+const Z3 = zn(3n);
+
+const f = groupHomomorphism(Z6, Z3, (a) => znElement(Z3, (a as bigint) % 3n));
+
+verifyGroupHomomorphism(f);  // true
+[...kernel(f)];              // [0n, 3n]
+imageSet(f).length;          // 3 (surjective)
+isInjective(f);              // false
+isSurjective(f);             // true
+```
+
+```typescript
+import { zn, znRing, znElement, ringHomomorphism, verifyRingHomomorphism, ringKernel } from 'abstract-algebra';
+
+// Z/6Z → Z/3Z as a ring homomorphism
+const Z6Ring = znRing(zn(6n));
+const Z3Ring = znRing(zn(3n));
+
+const f = ringHomomorphism(Z6Ring, Z3Ring, (a) => znElement(zn(3n), (a as bigint) % 3n));
+
+verifyRingHomomorphism(f);     // true
+[...ringKernel(f)].length;     // 2 (kernel is the ideal {0, 3})
+```
+
+Homomorphisms compose via `composeGroupHomomorphisms` / `composeRingHomomorphisms`, and isomorphisms can be inverted with `invertIsomorphism` / `invertRingIsomorphism`.
+
 ### Property Brands
 
 Properties like commutativity, idempotency, and cancellativity are modeled as phantom-branded interfaces. TypeScript's structural type system would otherwise collapse empty marker interfaces, so `unique symbol` brands ensure that a `Group<E>` cannot be passed where an `AbelianGroup<E>` is required unless the structure has been explicitly asserted as commutative.
@@ -159,6 +194,98 @@ lcm(ZRing, mk(4n), mk(6n));   // 12n
 ZRing.divMod(mk(17n), mk(5n));  // { quot: 3n, rem: 2n }
 ```
 
+### Rational Field
+
+```typescript
+import { rationalField, rational } from 'abstract-algebra';
+
+// Q — the field of rational numbers
+const Q = rationalField();
+const a = rational(3n, 4n);   // 3/4
+const b = rational(1n, 6n);   // 1/6
+
+Q.add.op(a, b);               // 11/12
+Q.mul.op(a, b);               // 1/8
+Q.mulInverse(a);               // 4/3
+Q.compare(a, b);               // 1 (3/4 > 1/6)
+```
+
+### Polynomial Ring
+
+```typescript
+import { rationalField, rational, polynomialRing, polynomialEuclideanDomain, polynomial, polynomialEvaluate } from 'abstract-algebra';
+
+const Q = rationalField();
+const QX = polynomialRing(Q);
+
+// p(x) = 1 + 2x + 3x²
+const p = polynomial(QX, rational(1n), rational(2n), rational(3n));
+
+// q(x) = 2 + x
+const q = polynomial(QX, rational(2n), rational(1n));
+
+QX.add.op(p, q);   // 3 + 3x + 3x²
+QX.mul.op(p, q);   // 2 + 5x + 8x² + 3x³
+
+// Evaluate p(2) = 1 + 4 + 12 = 17
+polynomialEvaluate(QX, p, rational(2n));  // 17/1
+
+// Polynomial division over a field (Euclidean domain)
+const QXE = polynomialEuclideanDomain(Q);
+const { quot, rem } = QXE.divMod(p, q);
+```
+
+### Matrix Ring
+
+```typescript
+import { zn, znRing, znElement, matrixRing, matrixFromRows, matrixGet, matrixTrace, matrixTranspose } from 'abstract-algebra';
+
+const Z5Ring = znRing(zn(5n));
+const M2Z5 = matrixRing(Z5Ring, 2);
+
+const mk = (v: bigint) => znElement(zn(5n), v);
+
+// 2x2 matrices over Z/5Z
+const A = matrixFromRows(M2Z5, [
+  [mk(1n), mk(2n)],
+  [mk(3n), mk(4n)]
+]);
+
+const B = matrixFromRows(M2Z5, [
+  [mk(0n), mk(1n)],
+  [mk(1n), mk(0n)]
+]);
+
+M2Z5.add.op(A, B);         // matrix addition mod 5
+M2Z5.mul.op(A, B);         // matrix multiplication mod 5
+
+matrixTrace(M2Z5, A);       // 1 + 4 = 0 (mod 5)
+matrixTranspose(M2Z5, A);   // [[1, 3], [2, 4]]
+```
+
+### Quaternion Ring
+
+```typescript
+import { quaternionRing, quaternion, quaternionConjugate, quaternionNorm } from 'abstract-algebra';
+
+// H — the quaternion division ring (non-commutative)
+const H = quaternionRing();
+
+const q = quaternion(1, 2, 3, 4);   // 1 + 2i + 3j + 4k
+const r = quaternion(0, 1, 0, 0);   // i
+
+H.mul.op(q, r);                      // quaternion multiplication
+H.mulInverse(q);                     // q^-1 = conjugate(q) / |q|²
+quaternionConjugate(q);              // 1 - 2i - 3j - 4k
+quaternionNorm(q);                   // sqrt(1 + 4 + 9 + 16) = sqrt(30)
+
+// Non-commutative: i*j ≠ j*i
+const i = quaternion(0, 1, 0, 0);
+const j = quaternion(0, 0, 1, 0);
+H.mul.op(i, j);  // k   = (0, 0, 0, 1)
+H.mul.op(j, i);  // -k  = (0, 0, 0, -1)
+```
+
 ### Ring Functions
 
 ```typescript
@@ -197,7 +324,34 @@ type CommutativeRing<E> = Ring<E> & { mul: Commutative };
 type IntegralDomain<E> = CommutativeRing<E> & { mul: Cancellative };
 type Field<E> = IntegralDomain<E> & { mulInverse(a: E): E };
 type EuclideanDomain<E> = IntegralDomain<E> & { norm(a: E): bigint; divMod(a: E, b: E): { quot: E; rem: E } };
+type DivisionRing<E> = Ring<E> & { mulInverse(a: E): E };
 ```
+
+## Concrete Implementations
+
+### Groups
+
+| Structure | Type | Properties |
+|---|---|---|
+| Z/nZ | `Zn` | Commutative, Finite, Cyclic |
+| S(n) | `SymmetricGroup` | Finite, non-abelian (n ≥ 3) |
+| ({false, true}, XOR) | `BooleanGroup` | Commutative, Finite, Cyclic |
+| (Z, +) | `IntegerAdditiveGroup` | Commutative, Cyclic, infinite |
+
+### Rings
+
+| Structure | Type | Properties |
+|---|---|---|
+| (Z, +, ×) | `IntegerRing` | EuclideanDomain |
+| (Z/nZ, +, ×) | `ZnRing` | CommutativeRing, Finite |
+| GF(p) | `ZpField` | Field, Finite |
+| ({false, true}, XOR, AND) | `BooleanRingImpl` | BooleanRing, Finite |
+| (Q, +, ×) | `RationalField` | Field, Ordered |
+| R[x] | `PolynomialRing` | CommutativeRing |
+| F[x] | `PolynomialEuclideanDomain` | EuclideanDomain |
+| M_n(R) | `MatrixRing` | Ring (non-commutative for n ≥ 2) |
+| H | `QuaternionRing` | DivisionRing (non-commutative) |
+
 
 ## Testing
 

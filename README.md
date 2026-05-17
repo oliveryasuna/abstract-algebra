@@ -1,5 +1,7 @@
 # abstract-algebra
 
+![NPM Version](https://img.shields.io/npm/v/abstract-algebra)
+
 Abstract algebra structures for TypeScript. A typed, composable library providing group and ring hierarchies with branded element types and property-based verification.
 
 TypeScript port of [oliveryasuna/math](https://github.com/oliveryasuna/math).

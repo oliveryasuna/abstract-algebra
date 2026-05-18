@@ -3,6 +3,7 @@ import {describe, it, expect} from 'vitest';
 
 import {booleanGroup} from '../src/group/structures/impl/boolean-group';
 import {integerAdditiveGroup} from '../src/group/structures/impl/integer-additive-group';
+import type {ZnElement} from '../src/group/structures/impl/zn';
 import {zn, znElement} from '../src/group/structures/impl/zn';
 import {booleanRing} from '../src/ring/structures/impl/boolean-ring-impl';
 import {integerRing} from '../src/ring/structures/impl/integer-ring';
@@ -207,7 +208,7 @@ describe('Matrix specific operations', (() => {
   const Z5 = zn(5n);
   const Z5Ring = znRing(Z5);
   const M2 = matrixRing(Z5Ring, 2);
-  const mk = ((v: bigint) => znElement(Z5, v));
+  const mk = ((v: bigint): ZnElement => znElement(Z5, v));
 
   it('identity matrix has trace = n * 1', (() => {
     const tr = matrixTrace(M2, M2.mul.identity);

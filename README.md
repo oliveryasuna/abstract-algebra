@@ -74,6 +74,67 @@ verifyRingHomomorphism(f);     // true
 
 Homomorphisms compose via `composeGroupHomomorphisms` / `composeRingHomomorphisms`, and isomorphisms can be inverted with `invertIsomorphism` / `invertRingIsomorphism`.
 
+### Subgroups
+
+```typescript
+import { zn, znElement, generateSubgroup, verifySubgroup, leftCosets, isNormalSubgroup, index, center, elementOrder } from 'abstract-algebra';
+
+const Z6 = zn(6n);
+const mk = (v: bigint) => znElement(Z6, v);
+
+// Generate <2> = {0, 2, 4}
+const H = generateSubgroup(Z6, [mk(2n)]);
+verifySubgroup(H);              // true
+H.order;                        // 3n
+
+leftCosets(Z6, H);              // [[0,2,4], [1,3,5]]
+index(Z6, H);                   // 2n
+isNormalSubgroup(Z6, H);        // true (abelian group)
+
+center(Z6).order;               // 6n (whole group — abelian)
+elementOrder(Z6, mk(2n));       // 3n
+```
+
+```typescript
+import { symmetricGroup, fromCycles, finiteSubgroup, isNormalSubgroup, center } from 'abstract-algebra';
+
+const S3 = symmetricGroup(3);
+const e = fromCycles(S3);
+const r = fromCycles(S3, [0, 1, 2]);
+const r2 = fromCycles(S3, [0, 2, 1]);
+
+// A3 = <(0 1 2)> is normal in S3
+const A3 = finiteSubgroup(S3, [e, r, r2]);
+isNormalSubgroup(S3, A3);       // true
+
+// <(0 1)> is NOT normal in S3
+const H = finiteSubgroup(S3, [e, fromCycles(S3, [0, 1])]);
+isNormalSubgroup(S3, H);        // false
+
+center(S3).order;               // 1n (trivial center)
+```
+
+### Ideals
+
+```typescript
+import { zn, znElement, znRing, generateIdeal, verifyIdeal, isZeroIdeal, isWholeRing, idealSum, idealIntersection } from 'abstract-algebra';
+
+const Z6Ring = znRing(zn(6n));
+const mk = (v: bigint) => znElement(zn(6n), v);
+
+// <2> = {0, 2, 4}, <3> = {0, 3}
+const I2 = generateIdeal(Z6Ring, [mk(2n)]);
+const I3 = generateIdeal(Z6Ring, [mk(3n)]);
+
+verifyIdeal(I2);                // true
+I2.order;                       // 3n
+
+idealSum(I2, I3).order;         // 6n (whole ring — gcd(2,3) = 1)
+idealIntersection(I2, I3).order; // 1n (zero ideal — lcm(2,3) = 6)
+isWholeRing(idealSum(I2, I3));  // true
+isZeroIdeal(idealIntersection(I2, I3)); // true
+```
+
 ### Property Brands
 
 Properties like commutativity, idempotency, and cancellativity are modeled as phantom-branded interfaces. TypeScript's structural type system would otherwise collapse empty marker interfaces, so `unique symbol` brands ensure that a `Group<E>` cannot be passed where an `AbelianGroup<E>` is required unless the structure has been explicitly asserted as commutative.
